@@ -163,7 +163,7 @@ Use this file structure as an information architecture, not as a literal folder 
 
 - **README.md** — Human onboarding: what the project is, prerequisites, setup, run/test/build, CI/deployment, release/versioning, directory map, key workflows, useful links. Include `[ ]` checklists for repeated procedures with more than three steps. Only include verified commands and URLs; otherwise mark them as `<confirm>` and list them as follow-up questions.
 - **SUMMARY.md** — Agent-focused orientation: stack, project map, quick rules, source-of-truth files, entry points, commands, gotchas, and where to dive deeper. It must be scannable in under 60 seconds. Pointers, not prose.
-- **AGENTS.md** — Mandatory agent rules: first docs to read, safe command usage, generated-file rules, testing expectations, area-specific coding constraints, app-running safety, and diagnostics workflow. Open with a persistent-context anchor warning.
+- **AGENTS.md** — Mandatory agent rules: first docs to read, safe command usage, generated-file rules, testing expectations, area-specific coding constraints, app-running safety, and diagnostics workflow. Open with a persistent-context anchor warning. **Must include an explicit rule that any change which adds, removes, or alters domain entities, business rules, schema, repositories/services, integrations, user-visible flows, build/config, analytics, or diagnostics must update the related documentation in the same change** — phrased concretely as a trigger → doc-to-update mapping, not aspirationally. The rule is: "In case of new features appearing which change domain or business logic, the related documentation should be adjusted as well." Restate it inside AGENTS.md as a load-bearing constraint, with a table covering at minimum: domain entity/rule changes → `docs/domain.md`; schema migrations → `docs/persistence.md` and `SUMMARY.md` schema table; new/removed repository or service → shared-unit README and relevant `docs/*.md`; backup/restore changes → `docs/backup-and-restore.md` (or equivalent); analytics changes → `docs/analytics.md`; integration changes → `docs/integrations/<name>.md`; build/config/CI changes → `docs/build-and-config.md`; new user-visible feature → `docs/features.md` (or equivalent feature matrix) plus any affected spec; new diagnostic class of failure → a new `[DIAG-XXX]` entry in `docs/diagnostics.md`; localization rule changes → `docs/localization.md`; new tab/screen/major UI rearrangement → the relevant runnable-unit README and the tabs/UI section of `SUMMARY.md`. Adapt the table rows to the target project's actual cross-cutting concerns; the principle is invariant, the specific files are project-shaped.
 - **CLAUDE.md** — One line: `@AGENTS.md`. Skip or adapt only if the target tooling uses a different agent alias mechanism.
 - **REFERENCES.md** — Flat list of every doc file as `@<path>`. No prose.
 - **CHANGELOG.md** — Only if not already present; standard Keep-a-Changelog format.
@@ -226,6 +226,7 @@ For each shared unit, in its existing folder:
 16. **Branches → environments → URLs table** if the project has multiple deploy environments.
 17. **Document ownership matrix** before edits — list file path, topic owner, audience, doc type, and quality status.
 18. **Minimal repair on existing docs** — in Mode B, do not rewrite conformant docs. Edit only where there is drift, duplication, unclear ownership, missing safety guidance, or missing required cross-reference.
+19. **Docs change with the code** — AGENTS.md must encode the rule "in case of new features appearing which change domain or business logic, the related documentation should be adjusted as well" as a load-bearing constraint, with a concrete trigger → doc-to-update mapping table (see Layer A → AGENTS.md). The same expectation governs your own work in this prompt: when discovery reveals a code change that has not yet been reflected in docs, treat the doc update as part of the change set, not a follow-up.
 
 ## Process — Mode A (Generate)
 
@@ -269,7 +270,7 @@ For each shared unit, in its existing folder:
 
    **Quality status** — classify each doc as `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`. Generated release files and intentionally tiny local README files may be left alone if they are serving their purpose.
 
-   **Pattern conformance** — check against every item in the "Writing patterns to apply" section above. Note which patterns are missing per file.
+   **Pattern conformance** — check against every item in the "Writing patterns to apply" section above. Note which patterns are missing per file. **Specifically verify that AGENTS.md contains the "docs change with the code" rule (writing pattern #19) with a concrete trigger → doc-to-update mapping. If it is missing or aspirational-only, flag as `[missing-pattern]` and add it during repair.**
 
    **Completeness** — list any required-output-structure files that are missing entirely.
 
@@ -299,6 +300,7 @@ After writing or editing, verify:
 - Every codegen-touching doc names the generated-vs-custom boundary.
 - SUMMARY.md is scannable in under 60 seconds (target: ≤ 250 lines).
 - AGENTS.md opens with the persistent-context anchor.
+- **AGENTS.md contains the "docs change with the code" rule with a concrete trigger → doc-to-update mapping table (writing pattern #19).** Aspirational phrasing alone ("keep docs up to date") does not satisfy this; the table must name actual files in this repo.
 - No file copies Beast Pass terminology by accident — all examples reflect the target project.
 - REFERENCES.md is in sync with files actually present on disk.
 - Every cross-reference resolves to a real file/section.
@@ -317,6 +319,7 @@ Report any gaps explicitly; do not silently leave them.
 - Do not duplicate content across files. Cross-reference instead.
 - Do not omit "out-of-scope" or "what this is NOT for" — those are load-bearing.
 - Do not skip the discovery phase. Writing without grounding produces hallucinated docs.
+- Do not phrase the "docs change with the code" rule aspirationally ("remember to update docs"). It must be a concrete trigger → doc-to-update mapping in AGENTS.md, naming actual files in the target project.
 - (Mode B) Do not regenerate files that are already conformant. "It's not how I would have written it" is not a reason to edit.
 - (Mode B) Do not bulk-rewrite to apply stylistic preferences. The bar for editing existing prose is a concrete finding (drift, over-detail, inconsistency, missing pattern, completeness gap).
 - (Mode B) Do not silently delete content. If content is removed, name where it went or why it was redundant.
