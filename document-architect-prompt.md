@@ -10,47 +10,65 @@ The Beast Pass docs system has a clear **layered information architecture** with
 
 ### Layer A — Entry points (repo root)
 
-| File | Topic owned | Audience | Distinctive trait |
-|---|---|---|---|
-| `README.md` | Onboarding, prerequisites, getting started, CI/CD, releases, **entity lifecycle checklists** (add/remove/modify), monorepo management, directory structure | Human contributors | Long-form, table-heavy, has explicit checklists with `[ ]` boxes |
-| `SUMMARY.md` | High-signal **agent orientation**: stack, projects, codegen pipeline, commands, entry points, gotchas | AI agents | "Decision aids" + "Where to dive deeper" sections; pointers, not prose |
-| `AGENTS.md` | **Agent rules & coding guidelines** (delegation rules, backend patterns, "don't do X" list, diagnostics workflow) | AI agents | Persistent-context anchor at top; rules-first |
-| `CLAUDE.md` | Just `@AGENTS.md` | Claude Code | Aliases for tooling that auto-loads `CLAUDE.md` |
-| `REFERENCES.md` | Flat index of `@`-prefixed paths to every key doc | Tooling | Pure reference list |
-| `CHANGELOG.md` | Release notes | Everyone | Conventional |
+| File            | Topic owned                                                                                                                                                | Audience           | Distinctive trait                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `README.md`     | Onboarding, prerequisites, getting started, CI/CD, releases, **entity lifecycle checklists** (add/remove/modify), monorepo management, directory structure | Human contributors | Long-form, table-heavy, has explicit checklists with `[ ]` boxes       |
+| `SUMMARY.md`    | High-signal **agent orientation**: stack, projects, codegen pipeline, commands, entry points, gotchas                                                      | AI agents          | "Decision aids" + "Where to dive deeper" sections; pointers, not prose |
+| `AGENTS.md`     | **Agent rules & coding guidelines** (delegation rules, backend patterns, "don't do X" list, diagnostics workflow)                                          | AI agents          | Persistent-context anchor at top; rules-first                          |
+| `CLAUDE.md`     | Just `@AGENTS.md`                                                                                                                                          | Claude Code        | Aliases for tooling that auto-loads `CLAUDE.md`                        |
+| `REFERENCES.md` | Flat index of `@`-prefixed paths to every key doc                                                                                                          | Tooling            | Pure reference list                                                    |
+| `CHANGELOG.md`  | Release notes                                                                                                                                              | Everyone           | Conventional                                                           |
 
 ### Layer B — Cross-cutting concerns (`docs/`)
 
-| File | Topic owned | Distinctive trait |
-|---|---|---|
-| `docs/authentication.md` | **Who** the caller is — Clerk, JWT, M2M, JIT provisioning, env vars | Cross-refs authorization.md; "Failure modes & quick triage" section linking to DIAG-IDs |
-| `docs/authorization.md` | **What** caller can do — PBAC policies, scopes (self/assigned/org), bypass controls, frontend gating | Mirror structure to authentication.md; "Generated vs custom boundaries" |
-| `docs/domain.md` | Non-coding **business rules** (entity meaning, real-world processes, workflows) | Explicitly says "NOT for code guidelines" — pure domain knowledge |
-| `docs/diagnostics.md` | Troubleshooting playbook | Searchable IDs (`[DIAG-XXX]`) + hashtags (`#auth #401`); standardized entry template (Symptoms / Diagnosis / Resolution / Related Files) |
-| `docs/integrations/<vendor>.md` | Per third-party integration deep dive | ASCII data-flow + sync triggers + data mapping tables |
-| `docs/specs/<feature>.md` | Feature specs with requirements + sequence diagrams | PlantUML diagrams, `[ ]` requirement checkboxes |
+| File                            | Topic owned                                                                                          | Distinctive trait                                                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/authentication.md`        | **Who** the caller is — Clerk, JWT, M2M, JIT provisioning, env vars                                  | Cross-refs authorization.md; "Failure modes & quick triage" section linking to DIAG-IDs                                                  |
+| `docs/authorization.md`         | **What** caller can do — PBAC policies, scopes (self/assigned/org), bypass controls, frontend gating | Mirror structure to authentication.md; "Generated vs custom boundaries"                                                                  |
+| `docs/domain.md`                | Non-coding **business rules** (entity meaning, real-world processes, workflows)                      | Explicitly says "NOT for code guidelines" — pure domain knowledge                                                                        |
+| `docs/diagnostics.md`           | Troubleshooting playbook                                                                             | Searchable IDs (`[DIAG-XXX]`) + hashtags (`#auth #401`); standardized entry template (Symptoms / Diagnosis / Resolution / Related Files) |
+| `docs/integrations/<vendor>.md` | Per third-party integration deep dive                                                                | ASCII data-flow + sync triggers + data mapping tables                                                                                    |
+| `docs/specs/<feature>.md`       | Feature specs with requirements + sequence diagrams                                                  | PlantUML diagrams, `[ ]` requirement checkboxes                                                                                          |
 
 ### Layer C — Per-app docs
 
-| File | Topic owned |
-|---|---|
-| `apps/<app>/README.md` | Build, run, test, project structure, deployment URLs |
-| `apps/<app>/SUMMARY.md` | Agent-focused high-signal orientation (only on large/complex apps like portal) |
-| `apps/<app>/AGENTS.md` | App-specific agent rules (only where needed; e.g., `infrastructure/aws-cdk/AGENTS.md`) |
-| `apps/services/API.md` | Endpoint reference (special — separates API surface from app README) |
+| File                    | Topic owned                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| `apps/<app>/README.md`  | Build, run, test, project structure, deployment URLs                                   |
+| `apps/<app>/SUMMARY.md` | Agent-focused high-signal orientation (only on large/complex apps like portal)         |
+| `apps/<app>/AGENTS.md`  | App-specific agent rules (only where needed; e.g., `infrastructure/aws-cdk/AGENTS.md`) |
+| `apps/services/API.md`  | Endpoint reference (special — separates API surface from app README)                   |
 
 ### Layer D — Per-package docs
 
-| File | Topic owned |
-|---|---|
+| File                       | Topic owned                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------- |
 | `packages/<pkg>/README.md` | Scope (in-scope / **out-of-scope**), public API, conventions, regeneration commands |
 
-### Layer E — Tools & data
+### Layer E — Tools, data, and generation
 
-| File | Topic owned |
-|---|---|
+| File                         | Topic owned                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------- |
 | `tools/generators/README.md` | Codegen pipeline with ASCII data-flow diagram, generator-by-generator reference |
-| `data/*.yaml`, `data/*.dbml` | Source-of-truth config (not docs but referenced everywhere as canonical) |
+| `data/*.yaml`, `data/*.dbml` | Source-of-truth config (not docs but referenced everywhere as canonical)        |
+
+### Layer F — Infrastructure, operations, and narrow references
+
+| File                               | Topic owned                                                                                   |
+| ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| `infrastructure/aws-cdk/README.md` | Deployment, environments, secrets, AWS architecture, database tunneling, troubleshooting      |
+| `infrastructure/aws-cdk/AGENTS.md` | Infra-specific agent orientation: stack responsibilities, extension rules, safety constraints |
+| `assets/**/README.md`              | Narrow asset placement references; useful only when a workflow needs local static assets      |
+
+### Quality observations from the current repo
+
+| Category                     | Files                                                                                                                         | Why it matters for another project                                                                                                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Central routing docs         | `AGENTS.md`, `SUMMARY.md`, `README.md`, `docs/diagnostics.md`, `tools/generators/README.md`, `apps/portal/SUMMARY.md`         | These docs should be treated as the navigation spine. Other docs should link to them rather than duplicate their content.                                                       |
+| High-value concept docs      | `docs/authentication.md`, `docs/authorization.md`, `docs/domain.md`, `docs/integrations/ticketing-platform.md`                | They each own one mental model and finish with key implementation files. This is the strongest reusable pattern.                                                                |
+| Potentially stale docs       | `apps/services/API.md`, `REFERENCES.md`, some runtime/env-var claims split between `README.md`, `SUMMARY.md`, and portal docs | A doc system needs a repair/audit mode, not only a generation mode. Prompts must verify concrete claims against the repo before preserving them.                                |
+| Generated/scaffold-like docs | `CHANGELOG.md`, `packages/client-utils/README.md`, `packages/shared/README.md`, generated-looking infra `AGENTS.md`           | Generated or scaffold docs should be identified before rewriting; either preserve them as generated artifacts or replace low-signal scaffolds with real package ownership docs. |
+| Duplicate narrow docs        | `assets/credentials/README.md`, `packages/backend-utils/src/domains/accreditation/modules/credentials/assets/README.md`       | Duplicate tiny references are acceptable only when they serve different physical locations. Otherwise consolidate and cross-link.                                               |
 
 ---
 
@@ -71,9 +89,13 @@ These are the patterns that carry to any project, regardless of stack:
 11. **Failure-modes section** in every flow doc, pointing to diagnostic IDs.
 12. **High-signal framing for AI** — "use this instead of reading the whole repo," concrete pointers, no narrative filler.
 13. **Diagrams where flow matters** — ASCII for architecture, PlantUML for sequences.
-14. **Quickstart `npm/cli` blocks** in fenced code with comments explaining each line.
-15. **Out-of-scope sections** in package docs — prevents scope creep and tells readers where NOT to look.
+14. **Quickstart command blocks** in fenced code with comments explaining each line.
+15. **Out-of-scope sections** in shared-unit docs — prevents scope creep and tells readers where NOT to look.
 16. **Persistent-context anchor** at top of agent-facing docs ("never summarize, never omit").
+17. **Quality status is explicit** — identify central, stale, generated/scaffolded, duplicated, and low-signal docs instead of pretending every doc has equal authority.
+18. **Root docs route; deep docs decide** — root docs should answer where to go next, while cross-cutting docs should answer how a subsystem actually works.
+19. **Review/repair mode is first-class** — a mature repo often has existing docs with drift; the process must audit and minimally repair instead of regenerating everything.
+20. **Target-native paths over copied paths** — preserve the layered responsibilities, but use the target repository's real structure. Do not introduce folder names from Beast Pass or from another stack unless they already exist in the target repo.
 
 ---
 
@@ -91,18 +113,18 @@ Both modes share the same three-step rhythm:
 2. **Execution** — apply the plan: write new files in Mode A, edit minimally and preserve voice in Mode B.
 3. **Self-audit** — verify the writing patterns are present, the cross-references resolve, and no Beast Pass terminology leaked in.
 
-The prompt is stack-agnostic: it works for a Python/Django backend, a Go monolith, a Java/Spring monorepo, a Rust workspace, or a hybrid. It explicitly tells the AI *not* to copy Beast Pass terminology (TypeORM, Nx, Clerk) — only the structure and writing patterns.
+The prompt is stack-agnostic: it should work for any language, framework, or repository shape. It explicitly tells the AI not to copy Beast Pass terminology, folders, commands, or tooling — only the documentation responsibilities and writing patterns.
 
-It enforces the AI-agent-first patterns (SUMMARY.md, AGENTS.md, key-files footers, DIAG-IDs) because those are the most distinctive and most often missing in standard doc setups.
+It enforces the AI-agent-first patterns (SUMMARY.md, AGENTS.md, key-files footers, DIAG-IDs) because those are the most distinctive and most often missing in standard doc setups. Beast Pass-specific paths appear only in the analysis above; the reusable prompt below uses placeholders and target-native paths.
 
 ---
 
 ## 4. The prompt (copy this block to use in another project)
 
-````text
+```text
 # Documentation Architect — Project Doc System Generator & Maintainer
 
-You are a documentation architect. Your job is to analyze a software project and either produce a complete documentation system or, if one already exists, review and repair it against a proven information architecture (described below). The architecture is stack-agnostic — you will adapt content to the project's actual language, framework, and tooling, but you will preserve the file layout, audience separation, and writing patterns exactly.
+You are a documentation architect. Analyze a software project and either create a documentation system or repair the existing one. Preserve the documentation responsibilities and writing patterns below, but use the target project's real language, framework, tooling, and directory structure. Do not copy Beast Pass folder names, framework names, commands, or terminology unless they actually exist in the target project.
 
 ## Mode detection (run this first, before anything else)
 
@@ -120,31 +142,29 @@ Decide:
 
 State which mode you selected and why in one sentence before continuing. If the signal is mixed (e.g., `SUMMARY.md` exists but is empty or unrelated), default to Mode B and treat the empty/unrelated files as items to repair.
 
-## Inputs you must gather first (both modes)
+## Discovery first (both modes)
 
 Before writing or editing anything, perform a discovery pass on the target project:
 
-1. **Repo shape** — top-level directories, monorepo or single-package, build tooling (Make, Gradle, Cargo workspaces, Nx, Turbo, npm workspaces, Poetry, etc.), language(s), framework(s), runtime version(s).
-2. **Apps vs packages vs infra vs tools** — classify every top-level directory.
-3. **Entry points** — main.* / app.* / server.* / cmd/*; identify each runnable.
-4. **Cross-cutting concerns** — authentication, authorization, persistence, messaging, integrations with third parties, code generation, testing strategy, deployment.
-5. **Source-of-truth files** — schema files, OpenAPI specs, IDL files, config-as-code, migration directories, generator inputs.
-6. **External integrations** — every third-party service the code calls (SDK imports, env-var prefixes, vendor names in dependencies).
-7. **Operational surface** — environments, deploy URLs, branches→env mapping, CI workflows, IaC stacks.
-8. **Existing docs inventory** — list every README/MD/RST/ADOC file already present, with line count and topic guess. In Mode B, this becomes the audit subject.
+1. **Repository shape** — top-level directories, monorepo vs single project, languages, frameworks, runtimes, package/build tools.
+2. **Runnable units** — identify each application, service, job, CLI, worker, frontend, backend, or other executable surface using the repo's own structure.
+3. **Shared units** — identify reusable code, internal SDKs, generated clients, common utilities, or equivalent shared areas using the repo's own structure.
+4. **Cross-cutting systems** — authentication, authorization, persistence, messaging, integrations, code generation, testing, deployment, observability.
+5. **Source-of-truth files** — schemas, migrations, API specs, IDL files, generated-file inputs, deployment config, policy config, or equivalent canonical files.
+6. **Existing docs** — inventory every README/MD/RST/ADOC file and mark its current topic, audience, and quality status: `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`.
 
-Do this with file listings, dependency manifests (package.json, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle, etc.), and grep for SDK imports. **Do not start writing or editing docs until discovery is complete.**
+Use file listings, dependency manifests, CI files, infrastructure/deployment files, and code search for SDK imports, env-var names, route definitions, commands, and generated-file markers. **Do not start writing or editing docs until discovery is complete.**
 
 ## Required output structure
 
-You will produce (or update) the following files. Keep names exactly as listed.
+Use this file structure as an information architecture, not as a literal folder template. Keep root and `docs/` names where possible. For runnable units, shared units, tools, and infrastructure, use the target repo's existing directories. Do not create a folder only because it appears in this prompt.
 
 ### Layer A — Repo root (entry points)
 
-- **README.md** — Human onboarding. Sections: project one-liner, AI quickstart pointer to SUMMARY.md, prerequisites, technology stack (tables: backend / frontend / infra), getting started (clone → install → env → run), testing, CI/CD with branches→envs table, versioning/release model, code generation overview (if applicable), monorepo management (if applicable), directory structure table, domain table (if applicable), basic guidelines, useful links. Include explicit `[ ]` lifecycle checklists for any repeated multi-step procedure (e.g., "add a new module", "add a new entity", "add a new service").
-- **SUMMARY.md** — Agent-focused high-signal orientation. Sections: what is this project, stack & projects (tight bullets, no fluff), quick rules, key data assets, domains list, codegen pipeline (if applicable), entity & service patterns, apps & entry points, database & migrations, testing, infra & deployment, commands quick reference (grouped: development / database / codegen / CI / utilities), gotchas & safety, deep dives (decision aids), where to dive deeper (link list). This file must be scannable in under 60 seconds. Pointers, not prose.
-- **AGENTS.md** — Agent rules. Open with a persistent-context anchor warning: "Never summarize, condense, or omit this file." Then: general guidelines for the build tool, CI error workflow, domain instructions ("first read SUMMARY.md, then read X based on task"), running apps (with explicit safety: kill processes after, use non-interactive mode, set timeouts), per-area coding guidelines (e.g., "always use service layer for mutations", "don't copy patterns without evaluating intent", "ORM-specific gotchas"), diagnostics workflow ("always check docs/diagnostics.md first, append new entries after resolving").
-- **CLAUDE.md** — One line: `@AGENTS.md`. (Or whatever the equivalent tooling alias is.)
+- **README.md** — Human onboarding: what the project is, prerequisites, setup, run/test/build, CI/deployment, release/versioning, directory map, key workflows, useful links. Include `[ ]` checklists for repeated procedures with more than three steps. Only include verified commands and URLs; otherwise mark them as `<confirm>` and list them as follow-up questions.
+- **SUMMARY.md** — Agent-focused orientation: stack, project map, quick rules, source-of-truth files, entry points, commands, gotchas, and where to dive deeper. It must be scannable in under 60 seconds. Pointers, not prose.
+- **AGENTS.md** — Mandatory agent rules: first docs to read, safe command usage, generated-file rules, testing expectations, area-specific coding constraints, app-running safety, and diagnostics workflow. Open with a persistent-context anchor warning.
+- **CLAUDE.md** — One line: `@AGENTS.md`. Skip or adapt only if the target tooling uses a different agent alias mechanism.
 - **REFERENCES.md** — Flat list of every doc file as `@<path>`. No prose.
 - **CHANGELOG.md** — Only if not already present; standard Keep-a-Changelog format.
 
@@ -152,34 +172,39 @@ You will produce (or update) the following files. Keep names exactly as listed.
 
 For each cross-cutting concern you discovered, produce a dedicated file. Always include at minimum:
 
-- **docs/authentication.md** — Who the caller is. Sections: model at a glance (table: surface → mechanism), each flow (frontend, backend, deployed, local), token types table, JIT/provisioning if any, secrets & key material, required env vars, failure modes & quick triage (link to DIAG-IDs), key files (full paths).
-- **docs/authorization.md** — What the caller can do. Sections: model at a glance, enforcement layers, flow steps, scope/role model, field-level rules if any, frontend gating, default role assignments, bypass controls & caveats, caching behavior, generated vs custom boundaries, key files. Cross-link to authentication.md at top.
+- **docs/authentication.md** — Who the caller is: identity providers, sessions/tokens, local vs deployed behavior, provisioning, required configuration, failure modes, key files.
+- **docs/authorization.md** — What the caller can do: roles, permissions, scopes, enforcement layers, frontend/backend gates, bypasses, generated/custom boundaries, key files. Cross-link to authentication.md at top.
 - **docs/domain.md** — Business rules / domain knowledge. State explicitly at top: "THIS DOCUMENT IS NOT FOR CODE GUIDELINES." Cover entities' real-world meaning, lifecycle, key constraints, relationships. Use bold for entity names, tables for comparisons, "Key rules:" bullet lists.
 - **docs/diagnostics.md** — Troubleshooting playbook. Mandatory format: instructions for "How to Search" (by ID, by tag, by error message), table of contents (ID | Title | Tags), then entries each with `[DIAG-XXX]` heading, `**Tags:**`, `**Symptoms:**`, `**Diagnosis Steps:**`, `**Resolution:**` or `**Common Causes:**` table, `**Related Files:**`. Tag format: `#lowercase-hyphenated`. End with a "How to Add New Entries" stub.
-- **docs/integrations/<vendor>.md** — One file per third-party integration. Sections: synchronized entities table, architecture diagram (ASCII), sync triggers table, configuration requirements, data mapping (API calls, JSON shapes, DB columns), env vars, file structure, "adding new <vendor> modules".
-- **docs/specs/<feature>.md** — One file per significant feature/system spec. Sections: requirements (with `[ ]`), implementation, sequence diagrams (PlantUML preferred), state model if any, authorization model, related tables/files.
+- **docs/integrations/<integration>.md** — One file per important third-party or external system integration: purpose, data flow, triggers, configuration, mappings, failure handling, key files.
+- **docs/specs/<feature>.md** — One file per significant feature/system spec: requirements, flow diagrams where helpful, state model if any, access model, related files.
 
 Skip a file only if the concern genuinely doesn't exist in the project.
 
-### Layer C — Per-app docs (`apps/<app>/`)
+### Layer C — Runnable-unit docs
 
-For each runnable application:
+For each runnable unit, in its existing folder:
 
 - **README.md** — Overview, deployment URLs table, getting started (build/run/test/lint), project structure (tree block), entry points, configuration, environment variables.
-- **SUMMARY.md** — Only for large/complex apps. Agent-focused mirror of root SUMMARY.md but scoped to this app.
+- **SUMMARY.md** — Only for large/complex runnable units. Agent-focused mirror of root SUMMARY.md but scoped to that unit.
 - **AGENTS.md** — Only when the app has rules distinct from root AGENTS.md (typical for infrastructure/IaC).
-- **API.md** — Only for API-exposing apps. Endpoint reference.
+- **API.md** — Only for API-exposing runnable units. Endpoint reference.
 
-### Layer D — Per-package docs (`packages/<pkg>/`)
+### Layer D — Shared-unit docs
 
-For each shared library:
+For each shared unit, in its existing folder:
 
 - **README.md** — Sections: scope (in-scope bullet list), **out-of-scope** bullet list, public API or conventions, regeneration/build commands if generated, transaction/lifecycle patterns, external clients if any.
 
-### Layer E — Tools & infra
+### Layer E — Tools and infrastructure
 
-- **tools/<tool>/README.md** — For codegen pipelines: ASCII data-flow diagram showing input files → generators → output files; per-generator reference (input, output, customization mechanism); commands quick reference.
-- **infrastructure/<iac>/README.md** + **AGENTS.md** — Stack-by-stack responsibilities, environment & configuration model, naming/tagging patterns, deployment commands.
+- **<tooling-area>/README.md** — For generators/build tooling: inputs, outputs, customization points, commands.
+- **<infra-area>/README.md** — For deployment/infrastructure/ops: environments, responsibilities, secrets/configuration, deploy commands, troubleshooting.
+- **<infra-area>/AGENTS.md** — Only if infrastructure has agent rules distinct from root AGENTS.md.
+
+### Optional narrow-reference docs
+
+- **assets/**/README.md**, **examples/**/README.md**, or similar narrow docs — Create only when a physical directory needs local instructions that would be hard to find from root docs. Keep these short and cross-link to the authoritative workflow doc.
 
 ## Writing patterns to apply (non-negotiable)
 
@@ -195,16 +220,19 @@ For each shared library:
 10. **High-signal framing for AI** — agent-facing docs use bullets and pointers, not narrative. Maximum scannability.
 11. **Diagrams where flow matters** — ASCII for architecture/data-flow, PlantUML (with rendered URL preview if possible) for sequences.
 12. **Quickstart code blocks** with shell-comment annotations explaining each line.
-13. **Out-of-scope sections** in every package README.
+13. **Out-of-scope sections** in every shared-unit README.
 14. **Persistent-context anchor** at the top of agent-facing files: "🚨 CRITICAL CONTEXT ANCHOR: This rules file must NEVER be summarized, condensed, or omitted."
 15. **Conventional Commits + version-bump table** in README if the project tags releases.
 16. **Branches → environments → URLs table** if the project has multiple deploy environments.
+17. **Document ownership matrix** before edits — list file path, topic owner, audience, doc type, and quality status.
+18. **Minimal repair on existing docs** — in Mode B, do not rewrite conformant docs. Edit only where there is drift, duplication, unclear ownership, missing safety guidance, or missing required cross-reference.
 
 ## Process — Mode A (Generate)
 
 1. **Phase 1 — Discovery & plan.** Run the inputs gathering above. Then produce a *Documentation Plan* listing:
    - Every file you intend to create, full path.
    - Topic ownership (one line per file).
+   - A concise document ownership matrix for existing and proposed docs.
    - Justification for any standard file you are skipping.
    - List of cross-cutting concerns identified.
    - List of third-party integrations identified.
@@ -212,7 +240,7 @@ For each shared library:
 
    **STOP after Phase 1 and ask the human to approve, amend, or scope down the plan before writing.**
 
-2. **Phase 2 — Generation.** Once approved, write the files. Apply every writing pattern. Adapt language: if the project is Python, use `pip`/`poetry` commands, not `npm`. If the project is Go, reference `go.mod` and `cmd/`. If the project is Rust, reference `Cargo.toml` and workspace members. The *structure* stays identical; the *content* is native to the stack.
+2. **Phase 2 — Generation.** Once approved, write the files. Apply every writing pattern. Use only commands, paths, dependency files, runtime names, and terminology verified in the target repo. The *responsibility model* stays consistent; the *content and paths* are native to the target project.
 
 3. **Phase 3 — Self-audit.** Run the self-audit checklist below.
 
@@ -239,6 +267,8 @@ For each shared library:
    - Tables of contents out of sync with actual content.
    - REFERENCES.md missing files that exist, or pointing at files that don't.
 
+   **Quality status** — classify each doc as `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`. Generated release files and intentionally tiny local README files may be left alone if they are serving their purpose.
+
    **Pattern conformance** — check against every item in the "Writing patterns to apply" section above. Note which patterns are missing per file.
 
    **Completeness** — list any required-output-structure files that are missing entirely.
@@ -246,6 +276,7 @@ For each shared library:
 2. **Phase 2 — Repair plan.** Produce a *Repair Plan* organized by file. For each file, list:
    - **Status:** `OK` (no changes), `Edit` (specific changes), `Restructure` (topic ownership wrong, content needs to move), `Delete` (redundant, content moved elsewhere), `Create` (missing).
    - **Findings:** bullet list of issues found, each tagged `[drift]`, `[over-detail]`, `[inconsistency]`, `[missing-pattern]`, or `[completeness]`.
+   - **Quality status:** one of `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`.
    - **Proposed action:** specific, minimal edits. For deletions or content moves, name the destination.
 
    **STOP after Phase 2 and ask the human to approve, amend, or scope down the repair plan before editing.** Default to *fewer*, *smaller* edits — only restructure when topic ownership is genuinely wrong.
@@ -272,6 +303,8 @@ After writing or editing, verify:
 - REFERENCES.md is in sync with files actually present on disk.
 - Every cross-reference resolves to a real file/section.
 - No file exceeds the project-appropriate length for its audience (agent docs short; human onboarding can be longer).
+- Each file's topic ownership is clear, and duplicated content is either removed or intentionally justified.
+- Required docs were skipped only with an explicit reason tied to the target repo's actual architecture.
 - (Mode B only) Every finding from the Repair Plan has been addressed or explicitly deferred with a reason.
 
 Report any gaps explicitly; do not silently leave them.
@@ -291,4 +324,4 @@ Report any gaps explicitly; do not silently leave them.
 ## When you finish
 
 End with a one-paragraph summary of what was created vs. updated vs. skipped (Mode A) or what was edited vs. restructured vs. deleted vs. left as-is (Mode B), plus a list of follow-up questions the human should answer to fill in any unverifiable gaps (e.g., "I couldn't determine the production URL — please confirm").
-````
+```
