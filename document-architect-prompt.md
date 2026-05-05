@@ -122,209 +122,406 @@ It enforces the AI-agent-first patterns (SUMMARY.md, AGENTS.md, key-files footer
 ## 4. The prompt (copy this block to use in another project)
 
 ```text
-# Documentation Architect — Project Doc System Generator & Maintainer
+# Prepare project documentation
 
-You are a documentation architect. Analyze a software project and either create a documentation system or repair the existing one. Preserve the documentation responsibilities and writing patterns below, but use the target project's real language, framework, tooling, and directory structure. Do not copy Beast Pass folder names, framework names, commands, or terminology unless they actually exist in the target project.
+Analyze the service or application repository I name at the end and generate or verify its documentation set. Do NOT write application code or modify source files. Only create, update, or review documentation files.
 
-## Mode detection (run this first, before anything else)
+## Stack-agnostic principle
 
-Inspect the repo for the doc system's signature files:
+This prompt is intentionally stack-agnostic. Do not assume the programming language, framework, runtime, package manager, build tool, test runner, linter, deployment platform, message transport, database, or repository shape. Discover them from the target repository and document what is actually used.
 
-- `SUMMARY.md` at repo root
-- `AGENTS.md` at repo root
-- `REFERENCES.md` at repo root
-- `docs/` directory with at least one of `authentication.md`, `authorization.md`, `domain.md`, `diagnostics.md`
+When this prompt mentions API-shape concepts (constructors, methods, overloads, parameters, fields, props, schema fields, return shapes, etc.), treat them as a representative list of API-shape detail across stacks. Apply the rule to whatever the equivalent concept is in the target stack: Go exports, Rust traits/impls, Python signatures, Elixir module functions, TypeScript types, React component props, etc.
 
-Decide:
+## Document set
 
-- **Mode A — Generate**: zero or one of those exist (e.g., only a stock `README.md`). Build the doc system from scratch.
-- **Mode B — Review & repair**: two or more exist. Audit and fix the existing system; do not regenerate.
+The doc set falls into three categories. Use these labels everywhere in this prompt.
 
-State which mode you selected and why in one sentence before continuing. If the signal is mixed (e.g., `SUMMARY.md` exists but is empty or unrelated), default to Mode B and treat the empty/unrelated files as items to repair.
+- **Always-required.** Must exist in every repo: `README.md`, `AGENTS.md`, `CLAUDE.md`.
+- **Required when the concern exists.** Must exist when the repo has the concern; omit and update the README documentation index when it does not:
+  - `docs/architecture.md` when the repo has a runtime boundary, internal modules, or deployment ownership. (Skip for trivial single-file utilities.)
+  - `docs/authentication.md` when the repo has authentication or authorization logic.
+- **Always-emitted with documented absence.** Must exist in every repo, even when the concern is empty. State the absence and cite what was inspected:
+  - `docs/domain.md`, `docs/interactions.md`, `docs/testing.md`, `docs/gotchas.md`.
 
-## Discovery first (both modes)
+The full ordered set, used in every file list and procedure in this prompt: `README.md`, `AGENTS.md`, `CLAUDE.md`, `docs/architecture.md`, `docs/domain.md`, `docs/authentication.md`, `docs/interactions.md`, `docs/testing.md`, `docs/gotchas.md`.
 
-Before writing or editing anything, perform a discovery pass on the target project:
+## Mandatory source-of-truth scan
 
-1. **Repository shape** — top-level directories, monorepo vs single project, languages, frameworks, runtimes, package/build tools.
-2. **Runnable units** — identify each application, service, job, CLI, worker, frontend, backend, or other executable surface using the repo's own structure.
-3. **Shared units** — identify reusable code, internal SDKs, generated clients, common utilities, or equivalent shared areas using the repo's own structure.
-4. **Cross-cutting systems** — authentication, authorization, persistence, messaging, integrations, code generation, testing, deployment, observability.
-5. **Source-of-truth files** — schemas, migrations, API specs, IDL files, generated-file inputs, deployment config, policy config, or equivalent canonical files.
-6. **Existing docs** — inventory every README/MD/RST/ADOC file and mark its current topic, audience, and quality status: `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`.
+This scan runs once, before any mode is announced. The Fresh, Verification, and Review procedures all begin from its results.
 
-Use file listings, dependency manifests, CI files, infrastructure/deployment files, and code search for SDK imports, env-var names, route definitions, commands, and generated-file markers. **Do not start writing or editing docs until discovery is complete.**
+Inspect the repository's actual sources of truth:
 
-## Required output structure
+1. Existing docs: `README.md`, `AGENTS.md`, `CLAUDE.md`, and any existing `docs/*.md`
+2. Language and tooling indicators: dependency manifests, lockfiles, workspace files, build files, task-runner files, tool-version files, formatter/linter configs, generated-code configs, and editor configs
+3. Runtime entrypoints: executable targets, server/app bootstrap files, CLI entrypoints, container definitions, process manager files, local-development scripts, and documented start commands
+4. Commands: scripts/tasks in manifests, task runners, make/task files, CI workflows, container commands, test-runner configs, and existing docs
+5. Testing: unit, integration, and end-to-end test projects/directories/configs; shared fakes, fixtures, helpers, test containers, browser drivers, seeded data, or other test infrastructure
+6. Linting and static checks: linter, formatter, type checker, analyzer, security scanner, style checker, and CI quality gates
+7. Dependencies: first-party/shared packages, third-party packages, private registries, external services, local services, credentials, environment variables, databases, queues, storage, browsers, emulators, containers, and system tools required to run or test the repo
+8. Architecture and interactions: internal modules/packages/projects, persistence, API or UI boundaries, background jobs, scheduled work, event publishers/consumers, webhooks, runtime HTTP calls, command-line integrations, and other external systems
+9. Business workflows and domain behavior: lifecycle/state machines, approval flows, setup/order-of-operations, capacity or quota rules, ownership/scoping rules, generated/system-managed data, idempotency/retry/concurrency behavior, and stable domain invariants documented in code, tests, schemas, migrations, or existing docs.
+10. Local app lifecycle: ports, startup order, background/foreground process behavior, required local services, login/auth setup, browser/API inspection requirements, cleanup/stop commands, and any commands or scripts that start multiple runtimes together.
+11. Deployment and infrastructure: infrastructure-as-code, manifests, deployment configs, environment-specific settings, resource naming patterns, and runtime hosting configuration
 
-Use this file structure as an information architecture, not as a literal folder template. Keep root and `docs/` names where possible. For runnable units, shared units, tools, and infrastructure, use the target repo's existing directories. Do not create a folder only because it appears in this prompt.
+Do not write a section until you have inspected the files that establish the facts in that section. If a fact cannot be determined, say that and name what you inspected. Never invent a command, dependency, or framework.
 
-### Layer A — Repo root (entry points)
+## Mode detection
 
-- **README.md** — Human onboarding: what the project is, prerequisites, setup, run/test/build, CI/deployment, release/versioning, directory map, key workflows, useful links. Include `[ ]` checklists for repeated procedures with more than three steps. Only include verified commands and URLs; otherwise mark them as `<confirm>` and list them as follow-up questions.
-- **SUMMARY.md** — Agent-focused orientation: stack, project map, quick rules, source-of-truth files, entry points, commands, gotchas, and where to dive deeper. It must be scannable in under 60 seconds. Pointers, not prose.
-- **AGENTS.md** — Mandatory agent rules: first docs to read, safe command usage, generated-file rules, testing expectations, area-specific coding constraints, app-running safety, and diagnostics workflow. Open with a persistent-context anchor warning. **Must include an explicit rule that any change which adds, removes, or alters domain entities, business rules, schema, repositories/services, integrations, user-visible flows, build/config, analytics, or diagnostics must update the related documentation in the same change** — phrased concretely as a trigger → doc-to-update mapping, not aspirationally. The rule is: "In case of new features appearing which change domain or business logic, the related documentation should be adjusted as well." Restate it inside AGENTS.md as a load-bearing constraint, with a table covering at minimum: domain entity/rule changes → `docs/domain.md`; schema migrations → `docs/persistence.md` and `SUMMARY.md` schema table; new/removed repository or service → shared-unit README and relevant `docs/*.md`; backup/restore changes → `docs/backup-and-restore.md` (or equivalent); analytics changes → `docs/analytics.md`; integration changes → `docs/integrations/<name>.md`; build/config/CI changes → `docs/build-and-config.md`; new user-visible feature → `docs/features.md` (or equivalent feature matrix) plus any affected spec; new diagnostic class of failure → a new `[DIAG-XXX]` entry in `docs/diagnostics.md`; localization rule changes → `docs/localization.md`; new tab/screen/major UI rearrangement → the relevant runnable-unit README and the tabs/UI section of `SUMMARY.md`. Adapt the table rows to the target project's actual cross-cutting concerns; the principle is invariant, the specific files are project-shaped.
-- **CLAUDE.md** — One line: `@AGENTS.md`. Skip or adapt only if the target tooling uses a different agent alias mechanism.
-- **REFERENCES.md** — Flat list of every doc file as `@<path>`. No prose.
-- **CHANGELOG.md** — Only if not already present; standard Keep-a-Changelog format.
+After the source-of-truth scan, choose one mode:
 
-### Layer B — Cross-cutting concerns (`docs/`)
+- **Fresh run** - fewer than two of the always-required docs (`README.md`, `AGENTS.md`, `CLAUDE.md`) exist, or the user explicitly asks to regenerate, rewrite, or replace the docs. Generate the full applicable set per the per-doc rules below.
+- **Verification run** - at least two of the always-required docs exist and the user asks to generate, fix, update, apply, or regenerate. Do NOT rewrite correct docs from scratch. Audit each existing doc against this prompt and fix only the violations. Preserve correct content verbatim.
+- **Review run** - the user asks to review, audit, check, or score the docs without asking to fix, apply, or regenerate. Read-only: inspect the repo and doc set, produce a structured findings report, and make no file changes.
 
-For each cross-cutting concern you discovered, produce a dedicated file. Always include at minimum:
+### Mode disambiguation
 
-- **docs/authentication.md** — Who the caller is: identity providers, sessions/tokens, local vs deployed behavior, provisioning, required configuration, failure modes, key files.
-- **docs/authorization.md** — What the caller can do: roles, permissions, scopes, enforcement layers, frontend/backend gates, bypasses, generated/custom boundaries, key files. Cross-link to authentication.md at top.
-- **docs/domain.md** — Business rules / domain knowledge. State explicitly at top: "THIS DOCUMENT IS NOT FOR CODE GUIDELINES." Cover entities' real-world meaning, lifecycle, key constraints, relationships. Use bold for entity names, tables for comparisons, "Key rules:" bullet lists.
-- **docs/diagnostics.md** — Troubleshooting playbook. Mandatory format: instructions for "How to Search" (by ID, by tag, by error message), table of contents (ID | Title | Tags), then entries each with `[DIAG-XXX]` heading, `**Tags:**`, `**Symptoms:**`, `**Diagnosis Steps:**`, `**Resolution:**` or `**Common Causes:**` table, `**Related Files:**`. Tag format: `#lowercase-hyphenated`. End with a "How to Add New Entries" stub.
-- **docs/integrations/<integration>.md** — One file per important third-party or external system integration: purpose, data flow, triggers, configuration, mappings, failure handling, key files.
-- **docs/specs/<feature>.md** — One file per significant feature/system spec: requirements, flow diagrams where helpful, state model if any, access model, related files.
+- When the user says "analyze and generate a documentation set" or similar generation-flavoured wording and the target docs already exist, treat this as a Verification run. "Generate" means "produce the correct end state", not "rewrite from scratch".
+- Treat the run as Fresh only when the user explicitly asks to regenerate, rewrite, or replace the docs, or when the always-required docs are essentially absent per the threshold above.
+- When the user asks to "fix", "apply", "update", or "regenerate", pick Verification or Fresh per the rules above and proceed.
+- When the user asks to "review", "audit", "check", or "score" without "and fix" or "and apply", stay in Review run.
 
-Skip a file only if the concern genuinely doesn't exist in the project.
+### Mode announcement
 
-### Layer C — Runnable-unit docs
+Your first user-facing message, before any edits, must (1) state which mode you picked and why, (2) list the applicable target docs that currently exist, and (3) for a Fresh or Verification run, name the files you plan to create or change and the category of change. Do not begin edits until this summary is in the conversation. If the user disagrees with the mode, switch.
 
-For each runnable unit, in its existing folder:
+## Fresh run procedure
 
-- **README.md** — Overview, deployment URLs table, getting started (build/run/test/lint), project structure (tree block), entry points, configuration, environment variables.
-- **SUMMARY.md** — Only for large/complex runnable units. Agent-focused mirror of root SUMMARY.md but scoped to that unit.
-- **AGENTS.md** — Only when the app has rules distinct from root AGENTS.md (typical for infrastructure/IaC).
-- **API.md** — Only for API-exposing runnable units. Endpoint reference.
+1. Confirm the source-of-truth scan is complete.
+2. Announce Fresh mode and list which always-required, required-when-applicable, and always-emitted-with-absence files you will create.
+3. Generate each file per the per-doc rules below, in the canonical order.
+4. Skip required-when-applicable files whose concern is absent, and update the `README.md` documentation index to reflect the absence.
+5. For always-emitted-with-absence files where the concern is empty, write the file with a single short section that states the absence and cites what was inspected.
+6. Run the Postflight checklist across the full generated set.
 
-### Layer D — Shared-unit docs
+## Verification run procedure
 
-For each shared unit, in its existing folder:
+1. List which applicable target files exist, using the canonical order: `README.md`, `AGENTS.md`, `CLAUDE.md`, `docs/architecture.md`, `docs/domain.md`, `docs/authentication.md` if the repo has authentication or authorization logic, `docs/interactions.md`, `docs/testing.md`, and `docs/gotchas.md`.
+2. For each existing file, check it against the Core principles and its own per-doc rules. Flag:
+   - Content that belongs in a different file.
+   - Duplicated facts across files; keep the fact in the owning file and replace other copies with links.
+   - Banned drift-prone specifics: file counts, line counts, API-shape element counts, exact dependency versions, full route/event/mock/entity inventories, valid-value lists that belong next to code or validation.
+   - File enumerations where a directory link plus purpose would be enough.
+   - API-detail tables (property, method, constructor, parameter, schema-field, component-prop, or stack-equivalent) that belong in source-adjacent API docs, typed schemas, comments, validators, generated docs, or examples.
+   - Missing required sections for that file.
+   - For `AGENTS.md`, a missing, altered, condensed, or non-leading CRITICAL CONTEXT ANCHOR block.
+   - Stale facts that contradict the current code, configs, scripts, CI, or deployment files.
+   - Claims, commands, file paths, or directory links that are not grounded in the repo or no longer exist.
+   - Sections, lines, tables, diagrams, or whole files that describe concerns the repo no longer has, that are over-detailed for what this prompt requires, or that were written speculatively before this prompt existed. Remove them; do not soften or rephrase to preserve them. Per Core principle 13, prefer cutting over keeping.
+3. Apply fixes in place. Do not regenerate a correct file. If a file is fundamentally misshaped, note that and rewrite only that file. Removal of stale or over-detailed content counts as a fix; record what was removed in your mode-announcement summary.
+4. If a required applicable file is missing, generate it per the Fresh-run rules and the per-doc rules below. If a required-when-applicable file exists but the repo does not contain that concern, remove it and update indexes or cross-links. If an always-emitted-with-absence file exists but the concern is empty, leave the file in place and update it to state the absence with citations.
+5. If a finding cannot be verified within this run, leave the existing content unchanged and list the item in a closing "Unverified during this run" section in your reply, with the reason and what you inspected.
+6. Run the Postflight checklist across the full applicable set.
 
-- **README.md** — Sections: scope (in-scope bullet list), **out-of-scope** bullet list, public API or conventions, regeneration/build commands if generated, transaction/lifecycle patterns, external clients if any.
+## Review run procedure
 
-### Layer E — Tools and infrastructure
+1. The Mandatory source-of-truth scan has already been performed. Do not edit anything.
+2. List which applicable target files exist, using the canonical order.
+3. For each existing file, run the Preflight checklist, Core principles, and per-doc rules against its contents. For concrete claims, verify them against the repo: search for symbols named in docs, inspect dependency manifests and lockfiles, check scripts and CI workflows for commands, confirm directory and file paths resolve, confirm cross-repo references are prose rather than broken relative links, and verify universal claims by inspecting every relevant matching file. If `AGENTS.md` exists, verify that its first block is the exact CRITICAL CONTEXT ANCHOR text from the AGENTS.md section below, with no summarising, rewording, or preceding prose.
+4. Produce a single markdown findings report:
 
-- **<tooling-area>/README.md** — For generators/build tooling: inputs, outputs, customization points, commands.
-- **<infra-area>/README.md** — For deployment/infrastructure/ops: environments, responsibilities, secrets/configuration, deploy commands, troubleshooting.
-- **<infra-area>/AGENTS.md** — Only if infrastructure has agent rules distinct from root AGENTS.md.
+   ```markdown
+   # Documentation review - <service name>
 
-### Optional narrow-reference docs
+   ## Verdict
+   <PASS | PASS-with-minors | NEEDS-WORK> - <one-sentence summary>
 
-- **assets/**/README.md**, **examples/**/README.md**, or similar narrow docs — Create only when a physical directory needs local instructions that would be hard to find from root docs. Keep these short and cross-link to the authoritative workflow doc.
+   ## File coverage
+   <bullet list of applicable files: present / missing / unexpected>
 
-## Writing patterns to apply (non-negotiable)
+   ## Findings
 
-1. **Audience declared up front** — every doc opens with one line about who it is for and one line about what it is NOT for, when ambiguity exists.
-2. **Cross-references at the top** — "For X, see Y" lines pair complementary docs.
-3. **Key files footer** — every conceptual doc ends with a "Key files" section listing canonical implementation file paths. Use absolute paths from repo root. Add line numbers when pointing at a specific function.
-4. **Tables over prose** for: tech stack, env→URL, branches→env, comparison matrices, file→purpose maps, scope rules, role→policy mappings, env var → description → source.
-5. **Lifecycle checklists with `[ ]`** for any procedure with more than three steps that will be repeated (adding/removing/modifying a unit of work).
-6. **Searchable IDs + tags** in diagnostics. Format: `[DIAG-XXX]` headings; `#lowercase-hyphenated` tags; both in TOC.
-7. **Generated vs custom boundary** explicitly named in any doc touching codegen. Pattern: "Do not edit `*.generated.*`. To change behavior, edit the generator at `<path>` or the source file at `<path>`."
-8. **Source-of-truth declarations** — name canonical files explicitly ("`<file>` is the primary source of truth").
-9. **Failure-modes section** in every flow doc, with links to DIAG-IDs.
-10. **High-signal framing for AI** — agent-facing docs use bullets and pointers, not narrative. Maximum scannability.
-11. **Diagrams where flow matters** — ASCII for architecture/data-flow, PlantUML (with rendered URL preview if possible) for sequences.
-12. **Quickstart code blocks** with shell-comment annotations explaining each line.
-13. **Out-of-scope sections** in every shared-unit README.
-14. **Persistent-context anchor** at the top of agent-facing files: "🚨 CRITICAL CONTEXT ANCHOR: This rules file must NEVER be summarized, condensed, or omitted."
-15. **Conventional Commits + version-bump table** in README if the project tags releases.
-16. **Branches → environments → URLs table** if the project has multiple deploy environments.
-17. **Document ownership matrix** before edits — list file path, topic owner, audience, doc type, and quality status.
-18. **Minimal repair on existing docs** — in Mode B, do not rewrite conformant docs. Edit only where there is drift, duplication, unclear ownership, missing safety guidance, or missing required cross-reference.
-19. **Docs change with the code** — AGENTS.md must encode the rule "in case of new features appearing which change domain or business logic, the related documentation should be adjusted as well" as a load-bearing constraint, with a concrete trigger → doc-to-update mapping table (see Layer A → AGENTS.md). The same expectation governs your own work in this prompt: when discovery reveals a code change that has not yet been reflected in docs, treat the doc update as part of the change set, not a follow-up.
+   ### <path/to/file.md>
+   - **Blocker** - line <N>: <quoted offending text>
+     - Rule: <Core principle or file-section name>
+     - Why: <one sentence grounded in the repo files you inspected>
+     - Suggested fix: <one sentence>
+   - **Major** - ...
+   - **Minor** - ...
 
-## Process — Mode A (Generate)
+   ## Missing or extra files
+   <missing applicable docs or unexpected conditional docs>
 
-1. **Phase 1 — Discovery & plan.** Run the inputs gathering above. Then produce a *Documentation Plan* listing:
-   - Every file you intend to create, full path.
-   - Topic ownership (one line per file).
-   - A concise document ownership matrix for existing and proposed docs.
-   - Justification for any standard file you are skipping.
-   - List of cross-cutting concerns identified.
-   - List of third-party integrations identified.
-   - Any naming-convention conflicts with the existing repo.
+   ## Unverifiable items
+   <anything you could not check, with the reason>
+   ```
 
-   **STOP after Phase 1 and ask the human to approve, amend, or scope down the plan before writing.**
+5. Severity definitions:
+   - **Blocker** - violates a Core principle, misses or alters the required AGENTS.md CRITICAL CONTEXT ANCHOR block, documents a command that is not supported by repo evidence, asserts an unverified universal claim, contains a broken cross-repo or ignored-file link, or states a load-bearing fact contradicted by current code/config. "Load-bearing" means the fact appears in a doc index, command list, dependency setup section, environment variable table, or any other place a reader will rely on to act.
+   - **Major** - content belongs in a different file, required section is missing, drift-prone specifics are included, enumerations should be directory links, API-detail tables belong in source-adjacent docs, a stale path or resource name appears in non-load-bearing prose, or a practical command section is incomplete.
+   - **Minor** - wording, repetition within a file, inconsistent capitalisation, or non-load-bearing style issues.
+6. The Review run does not modify files, commit, or create missing docs. If a finding cannot be fully inspected in one pass, list it under Unverifiable items instead of guessing.
+7. If the user follows up with "apply" or "fix these", switch to Verification run and address findings in place.
 
-2. **Phase 2 — Generation.** Once approved, write the files. Apply every writing pattern. Use only commands, paths, dependency files, runtime names, and terminology verified in the target repo. The *responsibility model* stays consistent; the *content and paths* are native to the target project.
+## Core principles
 
-3. **Phase 3 — Self-audit.** Run the self-audit checklist below.
+1. No duplication across files. Every fact lives in exactly one `.md`. Other documents link to it. If two files would repeat the same table, one is wrong.
+2. Navigation pointers may repeat across files when they only direct the reader to the owning document and do not restate the underlying facts.
+3. API-shape details belong next to the source of truth, not in markdown overview docs. Do not put property tables, method signatures, constructor signatures, field lists, parameter tables, component prop tables, schema-field inventories, return-shape tables, or stack-equivalents thereof in these docs. If source-adjacent docs are missing, note that as a follow-up; do not recreate them in markdown.
+4. Link to directories, not file inventories. Describe what a directory is for and link to it. Exception: a single key file that a reader needs to find.
+5. Do not write drift-prone specifics unless they are load-bearing and owned by a source file you link to. Banned by default:
+   - File counts or line counts.
+   - Counts of API-shape elements (constructors, overloads, routes, screens, components, handlers, endpoints, exports, traits, functions, tests, mocks, etc.).
+   - Exact dependency versions; link to dependency manifests or lockfiles for current versions.
+   - Full enumerations of routes, events, mocks, fakes, entities, components, consumers, pages, screens, or jobs.
+   - Valid values for properties, parameters, environment variables, flags, or settings when those values belong in validators, schemas, typed definitions, generated docs, or source-adjacent comments.
+6. Prefer intent over inventory. "The route definitions live under `<directory>` and are collected by the routing configuration" beats a list of every route file.
+7. Every concrete claim must be grounded in inspected code, config, scripts, CI, or docs. Prefer a file or directory link when the reader may need to verify the source.
+8. Before writing a paragraph, ask whether it will drift within a few ordinary changes. If yes, cut it or rephrase.
+9. Project docs must be self-contained. They must read and apply without cloning a sibling repo or opening a monorepo-level prompt. Do not use relative markdown links to files outside the current repo. If a reader must know about another repo, name the repo and path in prose.
+10. No unverified universal claims. Before writing "all projects", "every handler", "always", "never", or "no files", inspect every matching place. If exceptions exist, name them explicitly.
+11. Commands must be real. Only document launch, test, lint, build, or setup commands that are supported by repo evidence such as scripts, task files, CI workflows, tool configs, existing docs, or container/process definitions. If a common command is absent, state that it could not be determined and name what you inspected.
+12. Stack facts must be discovered. The docs must identify the repo's actual language(s), framework(s), runtime(s), package manager(s), test runner(s), linter(s), formatter(s), deployment tooling, persistence, and integration transports from the repo itself.
+13. Removal without hesitation. Never be afraid to delete docs, sections, lines, tables, diagrams, or claims that are no longer relevant, contradict the current repo, describe concerns the repo no longer has, were over-detailed when first written, or duplicate a fact owned elsewhere. Inertia is not a reason to keep content. The goal is a doc set that matches the repo today, not one that preserves every prior contribution. When in doubt, cut. If a whole `docs/*.md` file no longer applies, delete it and update the README documentation index. If a section is bloated relative to what this prompt requires, prune it down — do not rephrase to keep word count.
 
-## Process — Mode B (Review & repair)
+## Document separation
 
-1. **Phase 1 — Audit.** For each existing doc file, evaluate against:
+| File | Purpose | What goes here |
+|------|---------|----------------|
+| `README.md` | Universal onboarding for humans and agents on first contact | Service identity, detected stack, what it does, dependency setup, practical commands, environment variables, documentation index |
+| `AGENTS.md` | Rules agents must follow when modifying the service | Context anchor, service-specific contribution rules, dependency-change rules, documentation maintenance rules, cross-links to README and docs |
+| `CLAUDE.md` | Claude-specific overrides only | If there are no Claude-specific rules, the content must be literally `@AGENTS.md` |
+| `docs/architecture.md` | Structural details | Runtime boundary, module/project/package layout, internal dependencies, stable architectural surfaces, execution flow, deployment/infrastructure, dependency categories |
+| `docs/domain.md` | Stable business/domain areas with directory links | Business context, area-by-area summaries, core business entities when stable, data ownership, cross-cutting domain patterns |
+| `docs/authentication.md` | Auth mechanisms and actors | Token/session/API-key validation, identity extraction, actor types, authorization flow, request/correlation tracking. Required only when the repo has auth/authorization logic. |
+| `docs/interactions.md` | External interactions | Published/consumed events, runtime HTTP/RPC calls, webhooks, scheduled integrations, queues, storage, health checks, third-party APIs, or other external systems |
+| `docs/testing.md` | Test rules and utilities | Actual test frameworks, command discovery, end-to-end test launch, naming conventions, test utility categories, fixture/setup patterns |
+| `docs/gotchas.md` | Non-obvious constraints | Backward-compatibility traps, ordering rules, retry/idempotency/concurrency patterns, environment quirks, surprising domain rules |
 
-   **Topic ownership** — does this file own a single, clear topic? Flag if it overlaps another file (e.g., authentication content leaking into authorization.md), if it sprawls into unrelated topics, or if a topic from the required structure has no home.
+## Per-doc generation rules
 
-   **Drift** — verify every concrete claim against the current code: file paths, function names, env vars, commands, branch names, deploy URLs, package versions. Anything that doesn't match the repo today is drift.
+### README.md
 
-   **Over-detail** (red flags):
-   - Narrative paragraphs explaining *what* the code does — that belongs in code/comments, not docs. Keep *why* and *how to use*, drop the rest.
-   - Step-by-step internal mechanics that change with refactors. Replace with a one-line summary plus a link to the canonical source file.
-   - Duplicated content already covered in another doc. Replace with a cross-reference.
-   - Long inline code samples that aren't load-bearing examples. Trim or remove.
-   - Auto-generated content that should live in generated artifacts (API endpoint dumps, full env var lists from config) — point at the source instead.
-   - Any section longer than ~30 lines without a heading break — it has lost focus.
+Update the existing README or create it if missing. Must contain:
 
-   **Inconsistency** (red flags):
-   - Same concept named differently across files (e.g., "module" in one doc, "package" in another for the same thing).
-   - Conflicting commands or version requirements between README.md and SUMMARY.md.
-   - Cross-references that resolve to missing files or sections.
-   - Tables of contents out of sync with actual content.
-   - REFERENCES.md missing files that exist, or pointing at files that don't.
+- Service identity table: name, repo, primary language(s), framework(s), runtime/deployment, persistence, integration style, and primary entrypoint. Omit rows that do not apply.
+- Detected stack table: package manager, task runner, test runner(s), end-to-end test tool(s), linter/static checker(s), formatter, type checker/compiler if present, container/local-services tooling if present, and deployment tooling if present. Each row must link to the file that proves it.
+- What this service/app does: 3-5 numbered points.
+- "Start here" pointer directing to `AGENTS.md` for contribution rules, then the docs index below.
+- Dependency setup section:
+  - Commands to install project dependencies using the repo's actual package manager or dependency tool.
+  - Required system tools, external services, local services, credentials, private registries, browsers/drivers, emulators, containers, databases, queues, or storage needed to launch, test, lint, or run end-to-end tests.
+  - Any dependencies that must be added or configured before commands work. Be explicit about where they are declared or configured. If no extra dependencies are required, say so and cite the evidence.
+- Commands section with the most useful local commands, grounded in repo evidence:
+  - Launch the app/service locally.
+  - Run end-to-end tests.
+  - Run linter/static checks and check for lint issues.
+  - Install/update dependencies.
+  - Build, compile, unit test, integration test, format, type-check, or generate artifacts when these commands are common and useful in the repo.
+  For each command, include purpose, working directory, prerequisites, and the source file or config that proves the command. Put the most common/high-level command first; include lower-level direct commands only when useful.
+- Local app lifecycle section when the repo has runnable services/apps:
+  - Which processes need to run for common development workflows.
+  - Required ports and what each port serves.
+  - Startup order when it matters.
+  - Whether commands block the terminal or should be run in the background.
+  - How to stop/clean up running processes after testing.
+  - Login, browser, API inspection, seeded data, or local service prerequisites when needed.
+  Ground every item in scripts, configs, existing docs, process definitions, or source entrypoints.
+- Environment variables table: variable, required yes/no, purpose, and source file/config. Do not list valid values unless they are owned by a linked source of truth.
+- Naming conventions table when the repo emits externally visible resources with regular naming patterns (e.g., resource prefixes, suffix conventions, environment-suffixed names). Use generic resource kinds discovered from the repo, not assumed categories. Document the *patterns* here; individual resources belong in `docs/architecture.md`. Skip this section when no externally visible resources are owned by the repo.
+- Documentation index: one row per applicable doc with a one-line description. Note which always-emitted-with-absence docs are present-but-empty and which required-when-applicable docs were omitted.
 
-   **Quality status** — classify each doc as `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`. Generated release files and intentionally tiny local README files may be left alone if they are serving their purpose.
+README.md must NOT include architecture diagrams, internal dependency graphs, complete route inventories, or per-module tables. Those belong in the relevant docs below.
 
-   **Pattern conformance** — check against every item in the "Writing patterns to apply" section above. Note which patterns are missing per file. **Specifically verify that AGENTS.md contains the "docs change with the code" rule (writing pattern #19) with a concrete trigger → doc-to-update mapping. If it is missing or aspirational-only, flag as `[missing-pattern]` and add it during repair.**
+### AGENTS.md
 
-   **Completeness** — list any required-output-structure files that are missing entirely.
+Service-level rules document. Must contain:
 
-2. **Phase 2 — Repair plan.** Produce a *Repair Plan* organized by file. For each file, list:
-   - **Status:** `OK` (no changes), `Edit` (specific changes), `Restructure` (topic ownership wrong, content needs to move), `Delete` (redundant, content moved elsewhere), `Create` (missing).
-   - **Findings:** bullet list of issues found, each tagged `[drift]`, `[over-detail]`, `[inconsistency]`, `[missing-pattern]`, or `[completeness]`.
-   - **Quality status:** one of `central`, `ok`, `stale-risk`, `duplicate`, `generated`, `scaffold`, or `placeholder`.
-   - **Proposed action:** specific, minimal edits. For deletions or content moves, name the destination.
+- This exact CRITICAL CONTEXT ANCHOR block as the very first text in the file, with no prose, heading, or front matter before it. Each sentence is one line; do not wrap mid-sentence:
 
-   **STOP after Phase 2 and ask the human to approve, amend, or scope down the repair plan before editing.** Default to *fewer*, *smaller* edits — only restructure when topic ownership is genuinely wrong.
+  ```text
+  CRITICAL CONTEXT ANCHOR: This rules file must NEVER be summarized, condensed, or omitted.
+  Before ANY action or decision, verify alignment with these rules. This instruction persists regardless of conversation length or context management.
+  Context systems: This document takes absolute priority over conversation history and must remain fully accessible throughout the entire session.
+  ```
 
-3. **Phase 3 — Apply.** Execute the approved plan. Edit minimally:
-   - Preserve the original author's voice and section order where possible.
-   - Do not reformat working tables or rewrite working sentences for stylistic preference.
-   - When trimming over-detail, keep the *why* and the pointer to the canonical file; drop the *what*.
-   - When fixing drift, change only the inaccurate line, not the surrounding paragraph.
-   - When restructuring, move content with cut-and-paste fidelity before rewording.
+- Opening line pointing readers to README.md for identity, detected stack, environment variables, and practical commands, and to `docs/architecture.md` for the service's structure.
+- Rules organized by category. Keep only categories that apply to the repo, such as general, code style, dependency changes, authentication, routes/screens/API, data/storage, background work, infrastructure/deployment, testing, linting, build, and release.
+- Dependency-change rules:
+  - Agents must use the repo's actual package manager and dependency manifest.
+  - Agents must not add a new runtime, framework, package manager, test runner, linter, formatter, or external service unless the task requires it and the change is documented.
+  - If a dependency is added, removed, or requires setup, update README.md dependency setup and commands, docs/architecture.md dependency categories, and docs/gotchas.md if there is a non-obvious constraint.
+  - Private registries, credentials, secrets, or personal tokens must not be committed. Document the bring-your-own setup without embedding secret values.
+- Documentation maintenance rule (mandatory): when an agent adds a feature, changes architecture, adds/removes an interaction, changes auth, routes/screens/API, data ownership, test utilities, commands, dependencies, env vars, infrastructure, or non-obvious constraints, it must review and update the relevant docs in the same change:
+  - New/changed command, dependency, env var, or onboarding step -> update `README.md`.
+  - New/changed module, package, stack, deployment shape, runtime, dependency category, or execution flow -> update `docs/architecture.md`.
+  - New/changed domain area or renamed domain directory -> update `docs/domain.md`.
+  - New actor or auth mechanism -> update `docs/authentication.md`.
+  - New/changed event, runtime call, webhook, scheduled integration, external service, or health check -> update `docs/interactions.md`.
+  - New test framework, test command, end-to-end setup, or test utility category -> update `docs/testing.md`.
+  - New non-obvious constraint -> update `docs/gotchas.md`.
+  Docs must not drift. If unsure whether a doc update is needed, re-read this prompt's section for that file and decide.
 
-4. **Phase 4 — Self-audit.** Run the self-audit checklist below.
+AGENTS.md must NOT contain service identity, detected stack tables, environment variable tables, documentation maps, dependency inventories, architecture diagrams, runtime topology diagrams, full command tables, downstream service inventories, key component tables, or execution pipeline details. Link to the owning doc instead.
 
-## Self-audit checklist (both modes)
+### CLAUDE.md
 
-After writing or editing, verify:
+Default content: `@AGENTS.md` (single line). Only add content if there are genuine Claude-specific overrides that do not apply to other agents. Do not duplicate the documentation reading order here; that belongs in README.md.
 
-- Every conceptual doc has a "Key files" footer (where applicable).
-- Every flow doc cross-references its diagnostic entries.
-- Every codegen-touching doc names the generated-vs-custom boundary.
-- SUMMARY.md is scannable in under 60 seconds (target: ≤ 250 lines).
-- AGENTS.md opens with the persistent-context anchor.
-- **AGENTS.md contains the "docs change with the code" rule with a concrete trigger → doc-to-update mapping table (writing pattern #19).** Aspirational phrasing alone ("keep docs up to date") does not satisfy this; the table must name actual files in this repo.
-- No file copies Beast Pass terminology by accident — all examples reflect the target project.
-- REFERENCES.md is in sync with files actually present on disk.
-- Every cross-reference resolves to a real file/section.
-- No file exceeds the project-appropriate length for its audience (agent docs short; human onboarding can be longer).
-- Each file's topic ownership is clear, and duplicated content is either removed or intentionally justified.
-- Required docs were skipped only with an explicit reason tied to the target repo's actual architecture.
-- (Mode B only) Every finding from the Repair Plan has been addressed or explicitly deferred with a reason.
+### docs/architecture.md
 
-Report any gaps explicitly; do not silently leave them.
+Required when the repo has a runtime boundary, internal modules, or deployment ownership. Skip for trivial single-file utilities and note the omission in the README documentation index.
 
-## Anti-goals (do not do these)
+Analyze the repository structure and document:
 
-- Do not invent features, integrations, or env vars that don't exist in the codebase. Verify by grep before writing.
-- Do not copy code samples that won't run. If you can't verify, mark as `<example>` placeholder and flag it.
-- Do not write narrative essays. Bullets, tables, code blocks, lists.
-- Do not duplicate content across files. Cross-reference instead.
-- Do not omit "out-of-scope" or "what this is NOT for" — those are load-bearing.
-- Do not skip the discovery phase. Writing without grounding produces hallucinated docs.
-- Do not phrase the "docs change with the code" rule aspirationally ("remember to update docs"). It must be a concrete trigger → doc-to-update mapping in AGENTS.md, naming actual files in the target project.
-- (Mode B) Do not regenerate files that are already conformant. "It's not how I would have written it" is not a reason to edit.
-- (Mode B) Do not bulk-rewrite to apply stylistic preferences. The bar for editing existing prose is a concrete finding (drift, over-detail, inconsistency, missing pattern, completeness gap).
-- (Mode B) Do not silently delete content. If content is removed, name where it went or why it was redundant.
+- Minimal runtime boundary diagram at the top of the file when the repo has a runtime boundary. Show only external inputs, this service/app as a single box, and outputs/persistence/external systems. Name transports and storage exactly as discovered. Do not show internal module inventories in this diagram. Skip the diagram for pure libraries, shared packages, test harnesses, or tooling repos with no runtime boundary.
+- Table of modules/projects/packages/workspaces/apps in the repo with type and purpose, using the repo's own structure.
+- Internal dependencies between modules/projects/packages. Write a short "references of note" paragraph for routine layering; draw a dependency graph only when the structure is non-trivial and the graph adds value.
+- Layer/module responsibilities using the repo's own names. Do not force generic layer names that the repo does not use.
+- Stable architectural surfaces table: modules/projects/packages/workspaces/apps, runtime entrypoints, configuration surfaces, infrastructure setup surfaces, and framework convention files that explain how the repo is assembled. Mention a specific class or file only when it is a standard framework-related entrypoint, a best-practice-declared structure, or an infrastructure setup file that does not contain business logic. Do not include business-logic classes, line counts, API-shape element counts, or other volatile details.
+- Execution flow: request/event/job/CLI/UI action -> stable entrypoint or boundary -> domain/application workflow -> persistence/external systems -> result/side effect. Use stable module, boundary, or workflow names from the repo and only include flows that exist.
+- Runtime pipeline/order when the repo has middleware, plugin chains, route guards, lifecycle hooks, interceptors, background processors, command pipelines, or similar ordered execution. Read the actual composition/config files.
+- Deployment/infrastructure resources when present: table with resource name/pattern, purpose, key config that is load-bearing, and owning manifest/config/infrastructure surface. Skip when the repo has no deployment or infrastructure ownership.
+- Dependency categories:
+  - First-party/shared dependencies and why they exist.
+  - Third-party dependencies and why they exist.
+  - Build/test/lint/dev-only dependencies and why they exist.
+  Do not include version columns; link to manifests or lockfiles for current versions.
+
+Do not enumerate every route, component, screen, cluster, resource, file, or handler. Link to directories and describe their purpose.
+
+### docs/domain.md
+
+Always emitted. If the repo owns no domain logic (pure tooling, infrastructure, or library repos), state the absence and cite what you inspected.
+
+Short, stable descriptions of each business/domain area with directory links. Do not write per-type property tables, per-method tables, constructor signatures, component prop tables, schema-field inventories, or API response-shape tables.
+
+Structure:
+
+- Business context: what this service/app is responsible for in 2-3 sentences.
+- A sentence stating that per-type and per-field details are documented next to code, schemas, validators, or generated API docs.
+- One short subsection per domain area:
+  - Directory link.
+  - 1-3 sentences describing the area's responsibility. Business-core entities/classes may be named when they are stable domain concepts that contributors must understand; avoid incidental services, handlers, DTOs, records, helper types, and implementation-only modules.
+- Business workflows and state behavior when the repo owns stable domain processes:
+  - Lifecycle/state-machine flows and the business-core entities or domain areas that own them.
+  - Approval/review/setup sequences where order matters.
+  - Capacity, quota, allocation, ownership, scoping, or eligibility rules that would affect implementation.
+  - System-managed or generated domain data that must not be updated directly.
+  Keep this at workflow/invariant level; do not duplicate field inventories or validator details.
+- Relationship diagram only if the repo owns data and the diagram is stable.
+- Avoid enum, constant, DTO, helper, and file inventories. Mention only stable business-core entities/classes or domain concepts that are central to understanding the model.
+- Cross-cutting patterns such as soft delete, versioning, idempotency, optimistic concurrency, caching, offline state, no database, no external interactions, or other discovered patterns.
+
+### docs/authentication.md
+
+Required only when the repo has authentication or authorization logic. If the repo has no auth logic, omit this file and remove it from the README documentation index.
+
+Document:
+
+- How credentials/tokens/sessions/API keys/service identities are validated.
+- Identity extraction and propagation.
+- Actor types table, including users, services, automation, tests, webhooks, clients, scheduled jobs, and any other actors found in code/config. If a test or automation actor uses the same mechanism as a regular actor, state that explicitly.
+- Authorization/permission flow as prose or a small decision tree.
+- Request ID, correlation ID, trace ID, session ID, tenant ID, or equivalent tracking when present.
+
+### docs/interactions.md
+
+Always emitted. If the repo has no external interactions, state the absence and cite what you inspected.
+
+Document external interactions discovered from code and config. Include both asynchronous and synchronous interactions when both exist.
+
+- Published Events / Messages section when the repo publishes events or messages: stable external contract or message family, trigger condition, payload summary, destination/transport, and owning interaction boundary. Mention a class or file only when it directly owns the interaction and is useful for navigation. Do not enumerate helper files, helper DTOs, or enums that merely support the interaction.
+- Consumed Events / Messages section when the repo consumes events or messages: stable external contract or message family, owning interaction boundary, source system when discoverable, what it does, and what it emits. Mention a class or file only when it directly owns the interaction and is useful for navigation. Do not enumerate helper files, helper DTOs, or enums that merely support the interaction.
+- Runtime Calls section when the repo calls external HTTP/RPC/SDK/CLI/database/storage/search/cache/payment/email/analytics/AI or other services at runtime.
+- Incoming Integrations section for webhooks, callbacks, external clients, hosted endpoints, browser APIs, plugin APIs, or public extension points.
+- Scheduled/Background Work section when present.
+- Health Checks / Readiness section when present.
+- Self-consuming, fan-out, outbox/inbox, retry, dead-letter, idempotency, batching, rate-limit, or payload-offload patterns when present.
+- Link to the runtime boundary diagram in `docs/architecture.md` instead of duplicating it here. A focused sub-diagram is acceptable only when it explains a specific interaction pattern not captured by the boundary diagram.
+
+### docs/testing.md
+
+Always emitted. If the repo has no tests, state the absence and cite the test directories or configs you inspected (or their absence).
+
+Analyze test projects/directories/configs and document:
+
+- Actual test frameworks/runners used by the repo. If multiple are used, document which area uses which and preserve that pattern.
+- Commands:
+  - Run unit tests when present.
+  - Run integration tests when present.
+  - Run end-to-end tests when present.
+  - Run all tests when there is a supported aggregate command.
+  Each command must include working directory, prerequisites, and source file/config that proves it.
+- End-to-end test launch:
+  - Required app/server startup command, browser/driver/emulator/container/service prerequisites, seeded data, environment variables, and cleanup requirements.
+  - If no end-to-end tests exist or no supported command can be found, say so and name the files/configs inspected.
+- Local app lifecycle for testing:
+  - Required services/apps to start before tests.
+  - Ports used by each runtime.
+  - Whether the launch command starts multiple processes.
+  - Login/authentication or seeded-data steps needed before browser/API verification.
+  - Cleanup/stop requirements after the test run.
+- Rules: do not create new test projects or introduce a new test framework unless the task requires it. Follow existing naming, layout, fixtures, and assertion style.
+- Table of test areas/projects with framework/runner, focus, references, and manifest/config links. No version column.
+- Test utilities: list categories such as fakes, mocks, fixtures, factories, helpers, harnesses, containers, seeded data, browser utilities, snapshot helpers, or contract-test utilities with directory links and one-line descriptions. Do not enumerate every helper class or setup parameter.
+- One test-pattern description in prose showing how utilities are wired together, ending with a pointer to an actual test file as source of truth. Do not paste a full test unless a tiny fragment is genuinely useful.
+- Test-folder layout as it actually exists. If source layout and test layout differ, call that out so contributors follow the test tree's convention.
+
+Do not include test counts, per-helper constructor details, exact package versions, or full test code.
+
+### docs/gotchas.md
+
+Always emitted. If no non-obvious constraints exist, state the absence and cite what you inspected.
+
+Identify non-obvious constraints by reading the repo:
+
+- External service limits, quotas, retry, timeout, rate-limit, batching, or backoff patterns.
+- Immutable fields, one-time operations, migration/compatibility rules, data retention, cleanup, or irreversible actions.
+- Idempotency, deduplication, outbox/inbox, cache invalidation, eventual consistency, ordering, locking, concurrency, versioning, or transaction patterns.
+- Multiple data stores, contexts, clients, tenants, regions, environments, workspaces, or runtimes and when to use each.
+- Build/test/lint/dependency traps: generated files, required codegen, missing local services, private registries, required browsers/drivers, environment-specific setup, or commands that must run in a specific order.
+- Any pattern where the obvious approach would be wrong.
+- Domain rules that would surprise someone reading the code for the first time.
+- Local runtime lifecycle traps: port conflicts, long-running foreground commands, required startup order, background worker dependencies, login requirements, browser/API inspection steps, and cleanup/stop commands after local testing.
+- Domain workflow traps: state changes that must go through history/update records, setup sequences that must happen in order, approval gates, capacity/quota constraints, ownership/scoping constraints, and system-managed data that should not be mutated directly.
+
+## Rules for writing
+
+- Be specific while avoiding volatile code-level details in generated docs. Prefer stable repo terminology: directories, modules/packages/workspaces, commands, manifests, configs, externally visible resources, business workflows, domain boundaries, integration boundaries, and environment variables. Use code-symbol names only when this prompt explicitly allows them.
+- Be concise: tables over paragraphs, one-line descriptions over explanations.
+- No speculation: if you cannot determine something from the repo, say so and name what you inspected.
+- Ground every concrete claim in inspected code, config, scripts, CI, or docs. Prefer file or directory links where the reader may need to verify the source.
+- Reference shared libraries and generated code correctly: note whether types/modules are local, first-party/shared, third-party, or generated.
+- Do not duplicate content between files. Each file has one job. Cross-reference with links. (Restates Core principle 1 in writing-time form.)
+- When auditing existing docs, prefer cutting over rephrasing. Drifted, irrelevant, over-detailed, or speculative content should be deleted, not softened to keep it on the page. (Core principle 13.)
+- Use H2 for sections, H3 for subsections, pipe tables for structured data, and fenced code blocks for command examples.
+
+## Preflight checklist
+
+- [ ] Does this fact already live in another `.md`? If yes, link instead of restating.
+- [ ] Have I read the file(s) that establish this fact: manifest, lockfile, script/task file, entrypoint, config, test runner config, CI workflow, deployment config, source module, or docs?
+- [ ] Could this be source-adjacent API docs, generated docs, schema docs, comments, validators, or examples instead?
+- [ ] Am I enumerating files? Replace with a directory link plus purpose.
+- [ ] Am I including a count, version, or valid-value list? Remove unless load-bearing and source-linked.
+- [ ] Is this repo-shape assumption actually true here?
+- [ ] Is this command supported by repo evidence, and did I include the working directory, prerequisites, and source file/config?
+- [ ] Have I documented how to launch the app, run end-to-end tests, run lint/static checks, and install required dependencies when those are applicable?
+- [ ] Does every path or directory link exist in the repo?
+- [ ] Am I describing why this matters instead of inventorying what the code already makes obvious?
+
+## Postflight checklist
+
+- [ ] No two documents contain the same table or list. (Core principle 1.)
+- [ ] README.md is enough for a new developer to identify the stack, install dependencies, launch the app, run end-to-end tests when present, run lint/static checks, and find the rest of the docs.
+- [ ] AGENTS.md is enough for an agent to make a change without violating service-specific rules.
+- [ ] AGENTS.md begins with the exact CRITICAL CONTEXT ANCHOR block, with no preceding text.
+- [ ] CLAUDE.md is either `@AGENTS.md` or genuinely Claude-specific.
+- [ ] Every concrete claim can be traced to an inspected file or directory in the repo.
+- [ ] Every documented command is supported by a script, task file, CI workflow, config, existing doc, or runtime definition.
+- [ ] No markdown file contains API-detail tables that duplicate source-adjacent docs.
+- [ ] No file counts, line counts, API-shape element counts, test counts, or package version numbers outside manifest/lockfile links. (Core principle 5.)
+- [ ] Every markdown path or link resolves to something that exists in the repo, except cross-repo references written as prose.
+- [ ] Only applicable docs are present in the set, and the README documentation index reflects which always-emitted-with-absence docs are present-but-empty and which required-when-applicable docs were omitted.
+- [ ] Every `docs/` file has exactly one job and stays in its lane.
+- [ ] Pre-existing content that is irrelevant, drifted, over-detailed, or speculative has been removed rather than carried forward. (Core principle 13.)
 
 ## When you finish
 
 End with a one-paragraph summary of what was created vs. updated vs. skipped (Mode A) or what was edited vs. restructured vs. deleted vs. left as-is (Mode B), plus a list of follow-up questions the human should answer to fill in any unverifiable gaps (e.g., "I couldn't determine the production URL — please confirm").
+
+## Project to document
+
+The user will append the target repository name or path on the next line. Treat that as the only repo to document.
+
+The project to document is: 
 ```
